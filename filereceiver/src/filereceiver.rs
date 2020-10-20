@@ -30,13 +30,18 @@ pub struct FileReceiver {
 
 impl FileReceiver {
     pub fn new(port: u16) -> FileReceiver {
-        FileReceiver { port, action: AtomicUsize::new(Action::Start as usize) }
+        FileReceiver {
+            port,
+            action: AtomicUsize::new(Action::Start as usize),
+        }
     }
 
     pub fn start(&self) {
         let addr = format!("127.0.0.1:{}", self.port);
         let listener = TcpListener::bind(addr).expect("Failed to initiate server");
-        listener.set_nonblocking(true).expect("Failed to non-blocking");
+        listener
+            .set_nonblocking(true)
+            .expect("Failed to non-blocking");
         self.action.store(Action::Start as usize, Ordering::Relaxed);
 
         for stream in listener.incoming() {
@@ -48,9 +53,9 @@ impl FileReceiver {
                             break;
                         }
                         thread::sleep(POLLING_TIME);
-                    },
-                    _=> panic!("Encountered IO error: {}", err),
-                }
+                    }
+                    _ => panic!("Encountered IO error: {}", err),
+                },
             }
         }
     }
@@ -60,7 +65,8 @@ impl FileReceiver {
     }
 
     pub fn stop_now(&self) {
-        self.action.store(Action::StopNow as usize, Ordering::Relaxed);
+        self.action
+            .store(Action::StopNow as usize, Ordering::Relaxed);
     }
 
     fn handle_connection(&self, mut stream: TcpStream) {
@@ -103,35 +109,38 @@ impl FileReceiver {
         let mut buf = [0 as u8; BUF_SIZE];
 
         while self.action.load(Ordering::Relaxed) != Action::StopNow as usize
-                && match stream.read(&mut buf) {
-            Ok(0) => {
-                println!("File transfer completed");
-                false
-            }
-            Ok(size) => {
-                file.write_all(&buf[..size])
-                    .expect("Failed to write to file");
-
-                bytes_received += size as u64;
-                bytes_not_acknowledged += size as u64;
-
-                if bytes_not_acknowledged >= MAX_BYTES_NOT_ACKNOWLEDGED
-                    || (offset + bytes_received) == file_size
-                {
-                    file.flush().expect("Failed to flush the file");
-
-                    match stream.write(&(bytes_received + offset).to_be_bytes()) {
-                        Err(err) => eprintln!("WARNING: failed to send acknowledgedment: {}", err),
-                        Ok(_) => bytes_not_acknowledged = 0,
-                    }
+            && match stream.read(&mut buf) {
+                Ok(0) => {
+                    println!("File transfer completed");
+                    false
                 }
+                Ok(size) => {
+                    file.write_all(&buf[..size])
+                        .expect("Failed to write to file");
 
-                true
+                    bytes_received += size as u64;
+                    bytes_not_acknowledged += size as u64;
+
+                    if bytes_not_acknowledged >= MAX_BYTES_NOT_ACKNOWLEDGED
+                        || (offset + bytes_received) == file_size
+                    {
+                        file.flush().expect("Failed to flush the file");
+
+                        match stream.write(&(bytes_received + offset).to_be_bytes()) {
+                            Err(err) => {
+                                eprintln!("WARNING: failed to send acknowledgedment: {}", err)
+                            }
+                            Ok(_) => bytes_not_acknowledged = 0,
+                        }
+                    }
+
+                    true
+                }
+                Err(err) => {
+                    eprintln!("Error reading from stream: {}", err);
+                    true
+                }
             }
-            Err(err) => {
-                eprintln!("Error reading from stream: {}", err);
-                true
-            }
-        } {}
+        {}
     }
 }

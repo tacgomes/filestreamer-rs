@@ -1,5 +1,5 @@
-use std::env;
 use fileuploader::FileUploader;
+use std::env;
 
 fn show_usage(progname: &str) {
     eprintln!(

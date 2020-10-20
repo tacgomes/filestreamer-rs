@@ -1,5 +1,5 @@
-use std::env;
 use filereceiver::FileReceiver;
+use std::env;
 
 fn show_usage(progname: &str) {
     eprintln!(

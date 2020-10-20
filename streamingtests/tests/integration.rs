@@ -13,7 +13,6 @@ use sha2::{Digest, Sha256};
 use filereceiver::FileReceiver;
 use fileuploader::FileUploader;
 
-
 fn create_test_file(filename: &str, size: usize) {
     let file = File::create(Path::new(filename)).unwrap();
     let mut writer = BufWriter::new(file);
@@ -94,7 +93,6 @@ fn test_streaming_restricted_upload_speed() {
         uploader.upload(src_filename.to_string());
     });
 
-
     // The transfer should take 10 seconds to complete.
     // Allow a margin of error of 500 milliseconds.
     let now = Instant::now();
@@ -139,7 +137,6 @@ fn test_streaming_resuming_upload() {
     thread::sleep(Duration::from_secs(5));
     receiver.stop_now();
     receiver_thread.join().unwrap();
-
 
     let receiver_thread = thread::spawn(move || {
         receiver_clone_b.start();
