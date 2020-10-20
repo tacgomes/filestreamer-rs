@@ -62,34 +62,37 @@ impl FileReceiver {
         let mut bytes_not_acknowledged: u64 = 0;
         let mut buf = [0 as u8; BUF_SIZE];
 
-        loop {
-            match stream.read(&mut buf) {
-                Ok(size) => {
-                    if size == 0 {
-                        println!("File transfer completed");
-                        break;
-                    } else {
-                        file.write_all(&buf[..size])
-                            .expect("Failed to write to file");
+        while match stream.read(&mut buf) {
+            Ok(0) => {
+                println!("File transfer completed");
+                false
+            },
+            Ok(size) => {
+                file.write_all(&buf[..size])
+                    .expect("Failed to write to file");
 
-                        bytes_received += size as u64;
-                        bytes_not_acknowledged += size as u64;
+                bytes_received += size as u64;
+                bytes_not_acknowledged += size as u64;
 
-                        if bytes_not_acknowledged >= MAX_BYTES_NOT_ACKNOWLEDGED
-                            || (offset + bytes_received) == file_size
-                        {
-                            file.flush().expect("Failed to flush the file");
-                            match stream.write(&(bytes_received + offset).to_be_bytes()) {
-                                Err(err) => {
-                                    eprintln!("WARNING: failed to send acknowledgedment: {}", err)
-                                }
-                                Ok(_) => bytes_not_acknowledged = 0,
-                            }
+                if bytes_not_acknowledged >= MAX_BYTES_NOT_ACKNOWLEDGED
+                    || (offset + bytes_received) == file_size
+                {
+                    file.flush().expect("Failed to flush the file");
+
+                    match stream.write(&(bytes_received + offset).to_be_bytes()) {
+                        Err(err) => {
+                            eprintln!("WARNING: failed to send acknowledgedment: {}", err)
                         }
+                        Ok(_) => bytes_not_acknowledged = 0,
                     }
                 }
-                Err(err) => eprintln!("Error reading data: {}", err),
+
+                true
+            },
+            Err(err) => {
+                eprintln!("Error reading stream: {}", err);
+                true
             }
-        }
+        } {}
     }
 }
