@@ -37,8 +37,9 @@ impl FileReceiver {
         stream
             .read_exact(&mut filename_buf)
             .expect("Failed to read filename");
-        let filename =
-            String::from_utf8(filename_buf).expect("Failed to construct filename string");
+        let filename = String::from_utf8(filename_buf)
+            .expect("Failed to construct filename string")
+            + ".received";
 
         stream
             .read_exact(&mut u64_buf)

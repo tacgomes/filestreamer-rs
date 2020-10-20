@@ -27,4 +27,5 @@ Now, in another terminal window, use the client to upload a file:
 ./target/debug/fileuploader --host 127.0.0.1 --port 8080 testfile10Mb
 ```
 
-Replace `testfile10Mb` with the file that you wish to upload. 
+Replace `testfile10Mb` with the file that you wish to upload. The file received
+will have the `.received` suffix appended to its filename.
