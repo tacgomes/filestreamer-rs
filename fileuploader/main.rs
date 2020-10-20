@@ -1,6 +1,7 @@
 use std::env;
 
 mod fileuploader;
+mod ratelimit;
 
 fn show_usage(progname: &str) {
     eprintln!(
@@ -9,6 +10,7 @@ fn show_usage(progname: &str) {
 Options:
 \t--host HOST\t\tSpecify the server IP address
 \t--port HOST\t\tSpecify the server port
+\t--limit-rate RATE\tLimit upload speed (bytes/second)
 \t-h,--help\t\tShow usage",
         progname
     );
@@ -17,6 +19,7 @@ Options:
 fn main() {
     let mut host = String::new();
     let mut port: u16 = 0;
+    let mut rate_limit: u32 = 0;
     let mut filename = String::new();
 
     let mut i = 1;
@@ -38,6 +41,13 @@ fn main() {
                 port = args[i + 1].parse::<u16>().unwrap();
                 i += 1;
             }
+            "--limit-rate" => {
+                if i + 1 >= args.len() {
+                    show_usage(&args[0]);
+                }
+                rate_limit = args[i + 1].parse::<u32>().unwrap();
+                i += 1;
+            }
             "--help" | "-h" => {
                 show_usage(&args[0]);
                 std::process::exit(0);
@@ -53,6 +63,6 @@ fn main() {
         std::process::exit(1);
     }
 
-    let uploader = fileuploader::FileUploader::new(host, port);
+    let uploader = fileuploader::FileUploader::new(host, port, rate_limit);
     uploader.upload(filename);
 }

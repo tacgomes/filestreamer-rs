@@ -4,24 +4,32 @@ use std::io::ErrorKind;
 use std::io::SeekFrom;
 use std::net::TcpStream;
 use std::thread;
-use std::time;
+use std::time::{Duration, Instant};
+
+use crate::ratelimit::RateLimitedStream;
 
 const BUF_SIZE: usize = 1024;
 
 pub struct FileUploader {
     host: String,
     port: u16,
+    rate_limit: u32,
 }
 
 impl FileUploader {
-    pub fn new(host: String, port: u16) -> FileUploader {
-        FileUploader { host, port }
+    pub fn new(host: String, port: u16, rate_limit: u32) -> FileUploader {
+        FileUploader {
+            host,
+            port,
+            rate_limit,
+        }
     }
 
     pub fn upload(&self, filename: String) {
-        let mut stream = self.connect();
+        let mut stream = RateLimitedStream::new(self.connect(), self.rate_limit as f64);
 
-        let mut bytes_acknowledged: u64 = 0;
+        let mut bytes_acknowledged = 0;
+        let mut total_bytes_sent = 0;
 
         let file_size = metadata(&filename).expect("Failed to read file size").len();
 
@@ -31,6 +39,8 @@ impl FileUploader {
 
         let mut buf = [0 as u8; BUF_SIZE];
         let mut u64_buf = [0 as u8; 8];
+
+        let now = Instant::now();
 
         loop {
             match stream.read_exact(&mut u64_buf) {
@@ -52,6 +62,7 @@ impl FileUploader {
                 match stream.write(&buf[bytes_sent..bytes_read]) {
                     Ok(size) => {
                         bytes_sent += size;
+                        total_bytes_sent += size;
                     }
                     Err(e) => match e.kind() {
                         ErrorKind::WouldBlock => {}
@@ -59,7 +70,7 @@ impl FileUploader {
                             eprintln!("Connection reset");
                             file.seek(SeekFrom::Start(bytes_acknowledged))
                                 .expect("Failed to seek");
-                            stream = self.connect();
+                            stream.update_stream(self.connect());
                             self.send_header(&mut stream, &filename, file_size, bytes_acknowledged);
                             break;
                         }
@@ -78,6 +89,12 @@ impl FileUploader {
                 },
             }
         }
+
+        let secs = now.elapsed().as_secs_f64();
+        let upload_speed = total_bytes_sent as f64 / secs;
+        println!("Elapsed time: {:.2} seconds", secs);
+        println!("Bytes transferred: {} bytes", total_bytes_sent);
+        println!("Average upload speed: {} bytes/sec", upload_speed.round());
     }
 
     fn connect(&self) -> TcpStream {
@@ -90,7 +107,7 @@ impl FileUploader {
                 Err(err) => match err.kind() {
                     ErrorKind::ConnectionRefused => {
                         eprintln!("Connection refused. Retrying...");
-                        thread::sleep(time::Duration::from_secs(1));
+                        thread::sleep(Duration::from_secs(1));
                     }
                     _ => panic!("Unhandled error: {}", err),
                 },
@@ -111,7 +128,7 @@ impl FileUploader {
 
     fn send_header(
         &self,
-        stream: &mut TcpStream,
+        stream: &mut RateLimitedStream<TcpStream>,
         filename: &str,
         file_size: u64,
         file_offset: u64,

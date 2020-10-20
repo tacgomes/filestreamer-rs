@@ -2,16 +2,22 @@ use std::io;
 use std::io::prelude::*;
 use std::time::{Duration, Instant};
 
-pub struct RateLimiter<T> {
+pub struct RateLimitedStream<T> {
     stream: T,
     token_rate: f64,
     available_tokens: f64,
     last_updated: Instant,
 }
 
-impl<T: Write> RateLimiter<T> {
-    pub fn new(stream: T, token_rate: f64) -> RateLimiter<T> {
-        RateLimiter {
+impl<T: Read> Read for RateLimitedStream<T> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.stream.read(buf)
+    }
+}
+
+impl<T: Write> RateLimitedStream<T> {
+    pub fn new(stream: T, token_rate: f64) -> RateLimitedStream<T> {
+        RateLimitedStream {
             token_rate,
             available_tokens: 0.0,
             last_updated: Instant::now(),
@@ -24,6 +30,10 @@ impl<T: Write> RateLimiter<T> {
             self.reserve(buf.len());
         }
         self.stream.write(buf)
+    }
+
+    pub fn update_stream(&mut self, stream: T) {
+        self.stream = stream;
     }
 
     fn reserve(&mut self, required_tokens: usize) {
