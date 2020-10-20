@@ -69,3 +69,51 @@ impl<T: Write> RateLimitedStream<T> {
         self.last_updated = current_time;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_required_tokens_not_available_yet() {
+        let mut stream = RateLimitedStream::new(io::sink(), 1.0);
+
+        let now = Instant::now();
+
+        stream.write(&[0 as u8; 1]).unwrap();
+        assert_eq!(now.elapsed().as_millis(), 1000);
+
+        stream.write(&[0 as u8; 1]).unwrap();
+        assert_eq!(now.elapsed().as_millis(), 2000);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_required_tokens_larger_than_capacity() {
+        let mut stream = RateLimitedStream::new(io::sink(), 1.0);
+        stream.write(&[0 as u8; 2]).unwrap();
+    }
+
+    #[test]
+    fn test_required_tokens_immediately_available() {
+        let mut stream = RateLimitedStream::new(io::sink(), 2.0);
+
+        std::thread::sleep(Duration::from_secs(2));
+
+        let now = Instant::now();
+        stream.write(&[0 as u8; 2]).unwrap();
+        assert_eq!(now.elapsed().as_millis(), 0);
+    }
+
+    #[test]
+    fn test_some_required_tokens_not_immediately_available() {
+        let mut stream = RateLimitedStream::new(io::sink(), 2.0);
+
+        std::thread::sleep(Duration::from_millis(500));
+
+        let now = Instant::now();
+        stream.write(&[0 as u8; 2]).unwrap();
+        let elapsed_millis = now.elapsed().as_millis();
+        assert!(elapsed_millis >= 499 && elapsed_millis <= 501);
+    }
+}
