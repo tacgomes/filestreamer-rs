@@ -1,30 +1,69 @@
+use std::io;
 use std::io::prelude::*;
 use std::io::SeekFrom;
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::thread;
+use std::time::Duration;
 
 const BUF_SIZE: usize = 1024;
 const MAX_BYTES_NOT_ACKNOWLEDGED: u64 = 1 * 1024 * 1024;
+const POLLING_TIME: Duration = Duration::from_millis(200);
+
+enum Action {
+    Start = 0,
+    Stop = 1,
+    StopNow = 2,
+}
+
+impl Into<usize> for Action {
+    fn into(self) -> usize {
+        self as usize
+    }
+}
 
 pub struct FileReceiver {
     port: u16,
+    action: AtomicUsize,
 }
 
 impl FileReceiver {
     pub fn new(port: u16) -> FileReceiver {
-        FileReceiver { port }
+        FileReceiver { port, action: AtomicUsize::new(Action::Start as usize) }
     }
 
     pub fn start(&self) {
         let addr = format!("127.0.0.1:{}", self.port);
         let listener = TcpListener::bind(addr).expect("Failed to initiate server");
+        listener.set_nonblocking(true).expect("Failed to non-blocking");
+        self.action.store(Action::Start as usize, Ordering::Relaxed);
 
         for stream in listener.incoming() {
-            FileReceiver::handle_connection(stream.expect("Failed to create connection"));
+            match stream {
+                Ok(s) => self.handle_connection(s),
+                Err(err) => match err.kind() {
+                    io::ErrorKind::WouldBlock => {
+                        if self.action.load(Ordering::Relaxed) != Action::Start as usize {
+                            break;
+                        }
+                        thread::sleep(POLLING_TIME);
+                    },
+                    _=> panic!("Encountered IO error: {}", err),
+                }
+            }
         }
     }
 
-    fn handle_connection(mut stream: TcpStream) {
+    pub fn stop(&self) {
+        self.action.store(Action::Stop as usize, Ordering::Relaxed);
+    }
+
+    pub fn stop_now(&self) {
+        self.action.store(Action::StopNow as usize, Ordering::Relaxed);
+    }
+
+    fn handle_connection(&self, mut stream: TcpStream) {
         let mut u8_buf = [0 as u8; 1];
         let mut u64_buf = [0 as u8; 8];
 
@@ -63,7 +102,8 @@ impl FileReceiver {
         let mut bytes_not_acknowledged: u64 = 0;
         let mut buf = [0 as u8; BUF_SIZE];
 
-        while match stream.read(&mut buf) {
+        while self.action.load(Ordering::Relaxed) != Action::StopNow as usize
+                && match stream.read(&mut buf) {
             Ok(0) => {
                 println!("File transfer completed");
                 false
