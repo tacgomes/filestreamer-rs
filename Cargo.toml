@@ -1,15 +1,5 @@
-[package]
-name = "filestreamer-rs"
-version = "0.1.0"
-authors = ["tiagogomes <tiago.avv@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-
-[[bin]]
-name = "filereceiver"
-path = "filereceiver/main.rs"
-
-[[bin]]
-name = "fileuploader"
-path = "fileuploader/main.rs"
+[workspace]
+members = [
+    "fileuploader",
+    "filereceiver",
+]
