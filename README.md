@@ -24,7 +24,7 @@ To stream a file, first start the receiver server:
 Now, in another terminal window, use the client to upload a file:
 
 ```
-./target/debug/fileuploader --host 127.0.0.1 --port 8080 -limit-rate 1048576 testfile10Mb
+./target/debug/fileuploader --host 127.0.0.1 --port 8080 --limit-rate 1048576 testfile10Mb
 ```
 
 Replace `testfile10Mb` with the file that you wish to upload. The file received
