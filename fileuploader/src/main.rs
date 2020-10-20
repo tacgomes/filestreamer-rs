@@ -1,7 +1,5 @@
 use std::env;
-
-mod fileuploader;
-mod ratelimit;
+use fileuploader::FileUploader;
 
 fn show_usage(progname: &str) {
     eprintln!(
@@ -63,6 +61,6 @@ fn main() {
         std::process::exit(1);
     }
 
-    let uploader = fileuploader::FileUploader::new(host, port, rate_limit);
+    let uploader = FileUploader::new(host, port, rate_limit);
     uploader.upload(filename);
 }

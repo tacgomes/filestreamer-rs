@@ -1,6 +1,5 @@
 use std::env;
-
-mod filereceiver;
+use filereceiver::FileReceiver;
 
 fn show_usage(progname: &str) {
     eprintln!(
@@ -35,6 +34,6 @@ fn main() {
         std::process::exit(1);
     }
 
-    let receiver = filereceiver::FileReceiver::new(port);
+    let receiver = FileReceiver::new(port);
     receiver.start();
 }
