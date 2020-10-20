@@ -1,0 +1,12 @@
+[package]
+name = "streamingtests"
+version = "0.1.0"
+edition = "2018"
+authors = ["Tiago Gomes <tiago.avv@gmail.com>"]
+
+[dependencies]
+rand = "0.7.3"
+sha2 = "0.9.1"
+serial_test = "0.5.0"
+fileuploader = { path = "../fileuploader" }
+filereceiver = { path = "../filereceiver" }
