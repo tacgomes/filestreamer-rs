@@ -33,50 +33,48 @@ impl FileUploader {
         let mut u64_buf = [0 as u8; 8];
 
         loop {
-            stream
-                .set_nonblocking(true)
-                .expect("set_nonblocking call failed");
             match stream.read_exact(&mut u64_buf) {
-                Ok(_) => {
-                    bytes_acknowledged = u64::from_be_bytes(u64_buf);
-                }
+                Ok(_) => bytes_acknowledged = u64::from_be_bytes(u64_buf),
                 Err(err) => match err.kind() {
                     ErrorKind::WouldBlock => {}
                     _ => eprintln!("WARNING: failed to read acknowledgement: {}", err),
                 },
             }
 
-            // FIXME: fix this blocking/not-blocking madness
-            stream
-                .set_nonblocking(false)
-                .expect("set_nonblocking call failed");
+            let bytes_read = file.read(&mut buf[..]).expect("Failed to read");
+            if bytes_read == 0 {
+                break;
+            }
 
-            let n = file.read(&mut buf[..]).expect("Failed to read");
-            match stream.write(&buf[..n]) {
-                Ok(size) => {
-                    if size == 0 {
-                        while file_size != bytes_acknowledged {
-                            match stream.read_exact(&mut u64_buf) {
-                                Ok(_) => bytes_acknowledged = u64::from_be_bytes(u64_buf),
-                                Err(err) => {
-                                    eprintln!("WARNING: failed to read acknowledgement: {}", err)
-                                }
-                            }
+            let mut bytes_sent = 0;
+
+            while bytes_sent != bytes_read {
+                match stream.write(&buf[bytes_sent..bytes_read]) {
+                    Ok(size) => {
+                        bytes_sent += size;
+                    }
+                    Err(e) => match e.kind() {
+                        ErrorKind::WouldBlock => {}
+                        ErrorKind::ConnectionReset | ErrorKind::BrokenPipe => {
+                            eprintln!("Connection reset");
+                            file.seek(SeekFrom::Start(bytes_acknowledged))
+                                .expect("Failed to seek");
+                            stream = self.connect();
+                            self.send_header(&mut stream, &filename, file_size, bytes_acknowledged);
+                            break;
                         }
-                        break;
-                    }
+                        _ => panic!("Unhandled error: {}", e),
+                    },
                 }
-                Err(e) => match e.kind() {
-                    ErrorKind::ConnectionReset | ErrorKind::BrokenPipe => {
-                        eprintln!("Connection reset");
-                        stream = self.connect();
-                        file.seek(SeekFrom::Start(bytes_acknowledged))
-                            .expect("Failed to seek");
-                        self.send_header(&mut stream, &filename, file_size, bytes_acknowledged);
-                    }
-                    _ => {
-                        panic!("Unhandled error: {}", e);
-                    }
+            }
+        }
+
+        while bytes_acknowledged != file_size {
+            match stream.read_exact(&mut u64_buf) {
+                Ok(_) => bytes_acknowledged = u64::from_be_bytes(u64_buf),
+                Err(err) => match err.kind() {
+                    ErrorKind::WouldBlock => {}
+                    _ => eprintln!("WARNING: failed to read acknowledgement: {}", err),
                 },
             }
         }
@@ -100,8 +98,15 @@ impl FileUploader {
             }
         }
 
+        let stream = stream.unwrap();
+
         eprintln!("Connection established");
-        stream.unwrap()
+
+        stream
+            .set_nonblocking(true)
+            .expect("set_nonblocking call failed");
+
+        stream
     }
 
     fn send_header(
