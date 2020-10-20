@@ -1,5 +1,7 @@
 use std::env;
 
+mod fileuploader;
+
 fn show_usage(progname: &str) {
     eprintln!(
 "Usage: {} [Options...] FILE
@@ -50,4 +52,7 @@ fn main() {
         show_usage(&args[0]);
         std::process::exit(1);
     }
+
+    let uploader = fileuploader::FileUploader::new(host, port);
+    uploader.upload(filename);
 }

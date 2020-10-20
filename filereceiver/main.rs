@@ -1,5 +1,7 @@
 use std::env;
 
+mod filereceiver;
+
 fn show_usage(progname: &str) {
     eprintln!(
 "Usage: {} [Options...] PORT
@@ -33,4 +35,7 @@ fn main() {
         show_usage(&args[0]);
         std::process::exit(1);
     }
+
+    let receiver = filereceiver::FileReceiver::new(port);
+    receiver.start();
 }
