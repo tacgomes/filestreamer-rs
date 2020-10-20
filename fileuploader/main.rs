@@ -4,7 +4,7 @@ mod fileuploader;
 
 fn show_usage(progname: &str) {
     eprintln!(
-"Usage: {} [Options...] FILE
+        "Usage: {} [Options...] FILE
 
 Options:
 \t--host HOST\t\tSpecify the server IP address
@@ -16,11 +16,11 @@ Options:
 
 fn main() {
     let mut host = String::new();
-    let mut port : u16 = 0;
+    let mut port: u16 = 0;
     let mut filename = String::new();
 
     let mut i = 1;
-    let args : Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     while i < args.len() {
         match args[i].as_str() {
@@ -30,7 +30,7 @@ fn main() {
                 }
                 host = args[i + 1].clone();
                 i += 1;
-            },
+            }
             "--port" => {
                 if i + 1 >= args.len() {
                     show_usage(&args[0]);
@@ -41,8 +41,8 @@ fn main() {
             "--help" | "-h" => {
                 show_usage(&args[0]);
                 std::process::exit(0);
-            },
-            _ => filename = args[i].clone()
+            }
+            _ => filename = args[i].clone(),
         }
         i += 1;
     }

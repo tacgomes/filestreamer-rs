@@ -4,7 +4,7 @@ mod filereceiver;
 
 fn show_usage(progname: &str) {
     eprintln!(
-"Usage: {} [Options...] PORT
+        "Usage: {} [Options...] PORT
 
 Options:
 \t-h,--help\t\tShow usage",
@@ -13,19 +13,18 @@ Options:
 }
 
 fn main() {
-    let mut port : u16 = 0;
+    let mut port: u16 = 0;
 
     let mut i = 1;
-    let args : Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     while i < args.len() {
         match args[i].as_str() {
             "--help" | "-h" => {
                 show_usage(&args[0]);
                 std::process::exit(0);
-            },
-            _ => port = args[i].parse::<u16>().unwrap()
-
+            }
+            _ => port = args[i].parse::<u16>().unwrap(),
         }
         i += 1;
     }
