@@ -89,7 +89,7 @@ impl FileReceiver {
                 true
             }
             Err(err) => {
-                eprintln!("Error reading stream: {}", err);
+                eprintln!("Error reading from stream: {}", err);
                 true
             }
         } {}
