@@ -66,7 +66,7 @@ impl FileReceiver {
             Ok(0) => {
                 println!("File transfer completed");
                 false
-            },
+            }
             Ok(size) => {
                 file.write_all(&buf[..size])
                     .expect("Failed to write to file");
@@ -80,15 +80,13 @@ impl FileReceiver {
                     file.flush().expect("Failed to flush the file");
 
                     match stream.write(&(bytes_received + offset).to_be_bytes()) {
-                        Err(err) => {
-                            eprintln!("WARNING: failed to send acknowledgedment: {}", err)
-                        }
+                        Err(err) => eprintln!("WARNING: failed to send acknowledgedment: {}", err),
                         Ok(_) => bytes_not_acknowledged = 0,
                     }
                 }
 
                 true
-            },
+            }
             Err(err) => {
                 eprintln!("Error reading stream: {}", err);
                 true
