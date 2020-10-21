@@ -43,6 +43,8 @@ impl FileReceiver {
     }
 
     pub fn start(&self) {
+        println!("Listening for file upload requests in port: {}", self.port);
+
         let addr = format!("127.0.0.1:{}", self.port);
         let listener = TcpListener::bind(addr).expect("Failed to initiate server");
         listener
@@ -83,6 +85,8 @@ impl FileReceiver {
     }
 
     fn handle_connection(&self, mut stream: TcpStream) {
+        println!("Handling new request from: {}", stream.peer_addr().unwrap());
+
         let mut u8_buf = [0 as u8; 1];
         let mut u64_buf = [0 as u8; 8];
 
@@ -95,9 +99,8 @@ impl FileReceiver {
         stream
             .read_exact(&mut filename_buf)
             .expect("Failed to read filename");
-        let filename = String::from_utf8(filename_buf)
-            .expect("Failed to construct filename string")
-            + ".received";
+        let filename =
+            String::from_utf8(filename_buf).expect("Failed to construct filename string");
 
         stream
             .read_exact(&mut u64_buf)
@@ -108,6 +111,13 @@ impl FileReceiver {
             .read_exact(&mut u64_buf)
             .expect("Failed to read file offset");
         let offset = u64::from_be_bytes(u64_buf);
+
+        println!(
+            "Receiving file: {} (size={}, offset={})",
+            filename, file_size, offset
+        );
+
+        let filename = filename + ".received";
 
         let mut file = std::fs::OpenOptions::new()
             .create(true)
