@@ -12,18 +12,18 @@ const MAX_BYTES_NOT_ACKNOWLEDGED: u64 = 1 * 1024 * 1024;
 const POLLING_TIME: Duration = Duration::from_millis(200);
 
 #[derive(PartialEq)]
-enum Action {
-    Start = 0,
+enum Command {
+    Run = 0,
     Stop = 1,
     StopNow = 2,
 }
 
-impl From<usize> for Action {
+impl From<usize> for Command {
     fn from(value: usize) -> Self {
         match value {
-            0 => Action::Start,
-            1 => Action::Stop,
-            2 => Action::StopNow,
+            0 => Command::Run,
+            1 => Command::Stop,
+            2 => Command::StopNow,
             _ => unreachable!(),
         }
     }
@@ -31,14 +31,14 @@ impl From<usize> for Action {
 
 pub struct FileReceiver {
     port: u16,
-    action: AtomicUsize,
+    command: AtomicUsize,
 }
 
 impl FileReceiver {
     pub fn new(port: u16) -> FileReceiver {
         FileReceiver {
             port,
-            action: AtomicUsize::new(Action::Start as usize),
+            command: AtomicUsize::new(Command::Run as usize),
         }
     }
 
@@ -48,14 +48,14 @@ impl FileReceiver {
         listener
             .set_nonblocking(true)
             .expect("Failed to non-blocking");
-        self.set_action(Action::Start);
+        self.set_command(Command::Run);
 
         for stream in listener.incoming() {
             match stream {
                 Ok(s) => self.handle_connection(s),
                 Err(err) => match err.kind() {
                     io::ErrorKind::WouldBlock => {
-                        if self.get_action() != Action::Start {
+                        if self.get_command() != Command::Run {
                             break;
                         }
                         thread::sleep(POLLING_TIME);
@@ -67,19 +67,19 @@ impl FileReceiver {
     }
 
     pub fn stop(&self) {
-        self.set_action(Action::Stop);
+        self.set_command(Command::Stop);
     }
 
     pub fn stop_now(&self) {
-        self.set_action(Action::StopNow);
+        self.set_command(Command::StopNow);
     }
 
-    fn get_action(&self) -> Action {
-        Action::from(self.action.load(Ordering::Relaxed))
+    fn get_command(&self) -> Command {
+        Command::from(self.command.load(Ordering::Relaxed))
     }
 
-    fn set_action(&self, action: Action) {
-        self.action.store(action as usize, Ordering::Relaxed);
+    fn set_command(&self, command: Command) {
+        self.command.store(command as usize, Ordering::Relaxed);
     }
 
     fn handle_connection(&self, mut stream: TcpStream) {
@@ -121,7 +121,7 @@ impl FileReceiver {
         let mut bytes_not_acknowledged: u64 = 0;
         let mut buf = [0 as u8; BUF_SIZE];
 
-        while self.get_action() != Action::StopNow
+        while self.get_command() != Command::StopNow
             && match stream.read(&mut buf) {
                 Ok(0) => {
                     println!("File transfer completed");
