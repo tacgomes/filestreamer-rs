@@ -11,15 +11,21 @@ const BUF_SIZE: usize = 1024;
 const MAX_BYTES_NOT_ACKNOWLEDGED: u64 = 1 * 1024 * 1024;
 const POLLING_TIME: Duration = Duration::from_millis(200);
 
+#[derive(PartialEq)]
 enum Action {
     Start = 0,
     Stop = 1,
     StopNow = 2,
 }
 
-impl Into<usize> for Action {
-    fn into(self) -> usize {
-        self as usize
+impl From<usize> for Action {
+    fn from(value: usize) -> Self {
+        match value {
+            0 => Action::Start,
+            1 => Action::Stop,
+            2 => Action::StopNow,
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -42,14 +48,14 @@ impl FileReceiver {
         listener
             .set_nonblocking(true)
             .expect("Failed to non-blocking");
-        self.action.store(Action::Start as usize, Ordering::Relaxed);
+        self.set_action(Action::Start);
 
         for stream in listener.incoming() {
             match stream {
                 Ok(s) => self.handle_connection(s),
                 Err(err) => match err.kind() {
                     io::ErrorKind::WouldBlock => {
-                        if self.action.load(Ordering::Relaxed) != Action::Start as usize {
+                        if self.get_action() != Action::Start {
                             break;
                         }
                         thread::sleep(POLLING_TIME);
@@ -61,12 +67,19 @@ impl FileReceiver {
     }
 
     pub fn stop(&self) {
-        self.action.store(Action::Stop as usize, Ordering::Relaxed);
+        self.set_action(Action::Stop);
     }
 
     pub fn stop_now(&self) {
-        self.action
-            .store(Action::StopNow as usize, Ordering::Relaxed);
+        self.set_action(Action::StopNow);
+    }
+
+    fn get_action(&self) -> Action {
+        Action::from(self.action.load(Ordering::Relaxed))
+    }
+
+    fn set_action(&self, action: Action) {
+        self.action.store(action as usize, Ordering::Relaxed);
     }
 
     fn handle_connection(&self, mut stream: TcpStream) {
@@ -108,7 +121,7 @@ impl FileReceiver {
         let mut bytes_not_acknowledged: u64 = 0;
         let mut buf = [0 as u8; BUF_SIZE];
 
-        while self.action.load(Ordering::Relaxed) != Action::StopNow as usize
+        while self.get_action() != Action::StopNow
             && match stream.read(&mut buf) {
                 Ok(0) => {
                     println!("File transfer completed");
