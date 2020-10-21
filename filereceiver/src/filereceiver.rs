@@ -38,7 +38,7 @@ impl FileReceiver {
     pub fn new(port: u16) -> FileReceiver {
         FileReceiver {
             port,
-            command: AtomicUsize::new(Command::Run as usize),
+            command: AtomicUsize::new(Command::Stop as usize),
         }
     }
 
