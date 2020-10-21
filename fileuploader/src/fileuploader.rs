@@ -92,6 +92,7 @@ impl FileUploader {
 
         let secs = now.elapsed().as_secs_f64();
         let upload_speed = total_bytes_sent as f64 / secs;
+        println!("File transfer completed");
         println!("Elapsed time: {:.2} seconds", secs);
         println!("Bytes transferred: {} bytes", total_bytes_sent);
         println!("Average upload speed: {} bytes/sec", upload_speed.round());
@@ -117,7 +118,10 @@ impl FileUploader {
 
         let stream = stream.unwrap();
 
-        eprintln!("Connection established");
+        println!(
+            "Connection established with: {}",
+            stream.peer_addr().unwrap()
+        );
 
         stream
             .set_nonblocking(true)
