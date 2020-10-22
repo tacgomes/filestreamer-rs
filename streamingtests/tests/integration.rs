@@ -67,10 +67,11 @@ fn test_streaming_basic() {
 
     let checksum_original = calculate_checksum(src_filename);
     let checksum_copied = calculate_checksum(dst_filename);
-    assert_eq!(checksum_original, checksum_copied);
 
     fs::remove_file(&src_filename).unwrap();
     fs::remove_file(&dst_filename).unwrap();
+
+    assert_eq!(checksum_original, checksum_copied);
 }
 
 #[test]
@@ -93,22 +94,23 @@ fn test_streaming_restricted_upload_speed() {
         uploader.upload(src_filename.to_string());
     });
 
-    // The transfer should take 10 seconds to complete.
-    // Allow a margin of error of 500 milliseconds.
     let now = Instant::now();
     uploader_thread.join().unwrap();
     let elapsed_millis = now.elapsed().as_millis();
-    assert!(elapsed_millis > 9500 && elapsed_millis < 10500);
 
     receiver.stop();
     receiver_thread.join().unwrap();
 
     let checksum_original = calculate_checksum(src_filename);
     let checksum_copied = calculate_checksum(dst_filename);
-    assert_eq!(checksum_original, checksum_copied);
-
     fs::remove_file(&src_filename).unwrap();
     fs::remove_file(&dst_filename).unwrap();
+
+    // The transfer should take 10 seconds to complete. Allow some
+    // margin of error necessary for the tests for pass in the CI.
+    assert!(elapsed_millis > 9500 && elapsed_millis < 11500);
+
+    assert_eq!(checksum_original, checksum_copied);
 }
 
 #[test]
@@ -142,18 +144,22 @@ fn test_streaming_resuming_upload() {
         receiver_clone_b.start();
     });
 
-    // The transfer should take a bit more than seconds to complete.
     uploader_thread.join().unwrap();
     let elapsed_millis = now.elapsed().as_millis();
-    assert!(elapsed_millis > 10000 && elapsed_millis < 11500);
 
     receiver.stop();
     receiver_thread.join().unwrap();
 
     let checksum_original = calculate_checksum(src_filename);
     let checksum_copied = calculate_checksum(dst_filename);
-    assert_eq!(checksum_original, checksum_copied);
 
     fs::remove_file(&src_filename).unwrap();
     fs::remove_file(&dst_filename).unwrap();
+
+    // The transfer should take a bit more than 10 seconds to complete.
+    // Allow some margin of error necessary for the tests for pass in
+    // the CI.
+    assert!(elapsed_millis > 10000 && elapsed_millis < 12500);
+
+    assert_eq!(checksum_original, checksum_copied);
 }
