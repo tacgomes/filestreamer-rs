@@ -6,9 +6,9 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use rand::prelude::*;
 use serial_test::serial;
 use sha2::{Digest, Sha256};
+use rand::prelude::*;
 
 use filereceiver::FileReceiver;
 use fileuploader::FileUploader;
