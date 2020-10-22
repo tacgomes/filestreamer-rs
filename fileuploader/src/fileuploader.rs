@@ -1,4 +1,5 @@
 use std::fs::{metadata, File};
+use std::io;
 use std::io::prelude::*;
 use std::io::ErrorKind;
 use std::io::SeekFrom;
@@ -44,7 +45,10 @@ impl FileUploader {
 
         loop {
             match stream.read_exact(&mut u64_buf) {
-                Ok(_) => bytes_acknowledged = u64::from_be_bytes(u64_buf),
+                Ok(_) => {
+                    bytes_acknowledged = u64::from_be_bytes(u64_buf);
+                    self.update_progress_bar(bytes_acknowledged, file_size);
+                }
                 Err(err) => match err.kind() {
                     ErrorKind::WouldBlock => {}
                     _ => eprintln!("WARNING: failed to read acknowledgement: {}", err),
@@ -82,7 +86,10 @@ impl FileUploader {
 
         while bytes_acknowledged != file_size {
             match stream.read_exact(&mut u64_buf) {
-                Ok(_) => bytes_acknowledged = u64::from_be_bytes(u64_buf),
+                Ok(_) => {
+                    bytes_acknowledged = u64::from_be_bytes(u64_buf);
+                    self.update_progress_bar(bytes_acknowledged, file_size);
+                }
                 Err(err) => match err.kind() {
                     ErrorKind::WouldBlock => {}
                     _ => eprintln!("WARNING: failed to read acknowledgement: {}", err),
@@ -92,6 +99,7 @@ impl FileUploader {
 
         let secs = now.elapsed().as_secs_f64();
         let upload_speed = total_bytes_sent as f64 / secs;
+
         println!("File transfer completed");
         println!("Elapsed time: {:.2} seconds", secs);
         println!("Bytes transferred: {} bytes", total_bytes_sent);
@@ -152,5 +160,17 @@ impl FileUploader {
         stream
             .write(&file_offset.to_be_bytes())
             .expect("Failed to send file offset");
+    }
+
+    fn update_progress_bar(&self, bytes_acknowledged: u64, file_size: u64) {
+        let percentage = bytes_acknowledged as f64 / file_size as f64 * 100.0;
+        let progress = "=".repeat(percentage as usize / 2);
+        print!("\r[{:50}] {:.2}%", progress, percentage);
+        io::stdout().flush().unwrap();
+
+        if bytes_acknowledged == file_size {
+            print!("\x1B[2K\r"); // Clear current line
+            io::stdout().flush().unwrap();
+        }
     }
 }
