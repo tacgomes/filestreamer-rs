@@ -1,8 +1,5 @@
 use std::fs::{metadata, File};
-use std::io;
-use std::io::prelude::*;
-use std::io::ErrorKind;
-use std::io::SeekFrom;
+use std::io::{self, prelude::*, ErrorKind, SeekFrom};
 use std::net::TcpStream;
 use std::thread;
 use std::time::{Duration, Instant};
