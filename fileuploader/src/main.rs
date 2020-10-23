@@ -1,6 +1,6 @@
-use fileuploader::FileUploader;
-
 use structopt::StructOpt;
+
+use fileuploader::FileUploader;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "fileuploader", about = "Uploads a file")]
