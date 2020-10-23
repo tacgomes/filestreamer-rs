@@ -13,6 +13,8 @@ use sha2::{Digest, Sha256};
 use filereceiver::FileReceiver;
 use fileuploader::FileUploader;
 
+const SERVER_PORT: u16 = 8080;
+
 fn create_test_file(filename: &str, size: usize) {
     let file = File::create(Path::new(filename)).unwrap();
     let mut writer = BufWriter::new(file);
@@ -56,7 +58,11 @@ fn test_streaming_basic() {
     });
 
     let uploader_thread = thread::spawn(move || {
-        let uploader = FileUploader::new("localhost".to_string(), 8000, None);
+        let uploader = FileUploader::new(
+            "localhost".to_string(),
+            SERVER_PORT,
+            None
+        );
         uploader.upload(src_filename.to_string());
     });
 
@@ -90,7 +96,11 @@ fn test_streaming_restricted_upload_speed() {
     });
 
     let uploader_thread = thread::spawn(move || {
-        let uploader = FileUploader::new("localhost".to_string(), 8000, Some(megabytes(1) as u32));
+        let uploader = FileUploader::new(
+            "localhost".to_string(),
+            SERVER_PORT,
+            Some(megabytes(1) as u32),
+        );
         uploader.upload(src_filename.to_string());
     });
 
@@ -130,7 +140,11 @@ fn test_streaming_resuming_upload() {
     });
 
     let uploader_thread = thread::spawn(move || {
-        let uploader = FileUploader::new("localhost".to_string(), 8000, Some(megabytes(1) as u32));
+        let uploader = FileUploader::new(
+            "localhost".to_string(),
+            SERVER_PORT,
+            Some(megabytes(1) as u32),
+        );
         uploader.upload(src_filename.to_string());
     });
 
