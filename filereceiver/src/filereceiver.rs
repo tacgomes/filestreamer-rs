@@ -1,6 +1,4 @@
-use std::io;
-use std::io::prelude::*;
-use std::io::SeekFrom;
+use std::io::{self, prelude::*, SeekFrom};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
