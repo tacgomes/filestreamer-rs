@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 pub struct RateLimitedStream<T> {
     stream: T,
-    token_rate: f64,
+    token_rate: Option<u32>,
     available_tokens: f64,
     last_updated: Instant,
 }
@@ -16,7 +16,7 @@ impl<T: Read> Read for RateLimitedStream<T> {
 }
 
 impl<T: Write> RateLimitedStream<T> {
-    pub fn new(stream: T, token_rate: f64) -> RateLimitedStream<T> {
+    pub fn new(stream: T, token_rate: Option<u32>) -> RateLimitedStream<T> {
         RateLimitedStream {
             token_rate,
             available_tokens: 0.0,
@@ -26,7 +26,7 @@ impl<T: Write> RateLimitedStream<T> {
     }
 
     pub fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        if self.token_rate != 0.0 {
+        if let Some(_) = self.token_rate {
             self.reserve(buf.len());
         }
         self.stream.write(buf)
@@ -39,7 +39,7 @@ impl<T: Write> RateLimitedStream<T> {
     fn reserve(&mut self, required_tokens: usize) {
         let required_tokens = required_tokens as f64;
 
-        if required_tokens > self.token_rate {
+        if required_tokens > self.token_rate() {
             panic!("Requested number of tokens can not exceed capacity");
         }
 
@@ -47,7 +47,7 @@ impl<T: Write> RateLimitedStream<T> {
 
         if self.available_tokens < required_tokens {
             let missing_tokens = required_tokens - self.available_tokens;
-            let waiting_time = missing_tokens.ceil() / self.token_rate;
+            let waiting_time = missing_tokens.ceil() / self.token_rate();
             std::thread::sleep(Duration::from_secs_f64(waiting_time));
             self.sync();
         }
@@ -62,11 +62,15 @@ impl<T: Write> RateLimitedStream<T> {
         let time_elapsed = current_time.duration_since(self.last_updated).as_nanos();
 
         self.available_tokens += f64::min(
-            time_elapsed as f64 * self.token_rate / 1_000_000_000.0,
-            self.token_rate,
+            time_elapsed as f64 * self.token_rate() / 1_000_000_000.0,
+            self.token_rate(),
         );
 
         self.last_updated = current_time;
+    }
+
+    fn token_rate(&self) -> f64 {
+        self.token_rate.unwrap() as f64
     }
 }
 
@@ -76,7 +80,7 @@ mod tests {
 
     #[test]
     fn test_required_tokens_not_available_yet() {
-        let mut stream = RateLimitedStream::new(io::sink(), 1.0);
+        let mut stream = RateLimitedStream::new(io::sink(), Some(1));
 
         let now = Instant::now();
 
@@ -90,13 +94,13 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_required_tokens_larger_than_capacity() {
-        let mut stream = RateLimitedStream::new(io::sink(), 1.0);
+        let mut stream = RateLimitedStream::new(io::sink(), Some(1));
         stream.write(&[0 as u8; 2]).unwrap();
     }
 
     #[test]
     fn test_required_tokens_immediately_available() {
-        let mut stream = RateLimitedStream::new(io::sink(), 2.0);
+        let mut stream = RateLimitedStream::new(io::sink(), Some(2));
 
         std::thread::sleep(Duration::from_secs(2));
 
@@ -107,7 +111,7 @@ mod tests {
 
     #[test]
     fn test_some_required_tokens_not_immediately_available() {
-        let mut stream = RateLimitedStream::new(io::sink(), 2.0);
+        let mut stream = RateLimitedStream::new(io::sink(), Some(2));
 
         std::thread::sleep(Duration::from_millis(500));
 

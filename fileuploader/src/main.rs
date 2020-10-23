@@ -21,11 +21,6 @@ struct Cli {
 fn main() {
     let args = Cli::from_args();
 
-    let rate_limit = match args.rate_limit {
-        Some(val) => val,
-        None => 0,
-    };
-
-    let uploader = FileUploader::new(args.host, args.port, rate_limit);
+    let uploader = FileUploader::new(args.host, args.port, args.rate_limit);
     uploader.upload(args.filename);
 }

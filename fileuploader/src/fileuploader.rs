@@ -11,11 +11,11 @@ const BUF_SIZE: usize = 1024;
 pub struct FileUploader {
     host: String,
     port: u16,
-    rate_limit: u32,
+    rate_limit: Option<u32>,
 }
 
 impl FileUploader {
-    pub fn new(host: String, port: u16, rate_limit: u32) -> FileUploader {
+    pub fn new(host: String, port: u16, rate_limit: Option<u32>) -> FileUploader {
         FileUploader {
             host,
             port,
@@ -24,7 +24,7 @@ impl FileUploader {
     }
 
     pub fn upload(&self, filename: String) {
-        let mut stream = RateLimitedStream::new(self.connect(), self.rate_limit as f64);
+        let mut stream = RateLimitedStream::new(self.connect(), self.rate_limit);
 
         let mut bytes_acknowledged = 0;
         let mut total_bytes_sent = 0;

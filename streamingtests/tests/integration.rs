@@ -56,7 +56,7 @@ fn test_streaming_basic() {
     });
 
     let uploader_thread = thread::spawn(move || {
-        let uploader = FileUploader::new("localhost".to_string(), 8000, 0);
+        let uploader = FileUploader::new("localhost".to_string(), 8000, None);
         uploader.upload(src_filename.to_string());
     });
 
@@ -90,7 +90,7 @@ fn test_streaming_restricted_upload_speed() {
     });
 
     let uploader_thread = thread::spawn(move || {
-        let uploader = FileUploader::new("localhost".to_string(), 8000, megabytes(1) as u32);
+        let uploader = FileUploader::new("localhost".to_string(), 8000, Some(megabytes(1) as u32));
         uploader.upload(src_filename.to_string());
     });
 
@@ -130,7 +130,7 @@ fn test_streaming_resuming_upload() {
     });
 
     let uploader_thread = thread::spawn(move || {
-        let uploader = FileUploader::new("localhost".to_string(), 8000, megabytes(1) as u32);
+        let uploader = FileUploader::new("localhost".to_string(), 8000, Some(megabytes(1) as u32));
         uploader.upload(src_filename.to_string());
     });
 
