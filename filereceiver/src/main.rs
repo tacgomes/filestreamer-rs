@@ -1,39 +1,16 @@
 use filereceiver::FileReceiver;
-use std::env;
 
-fn show_usage(progname: &str) {
-    eprintln!(
-        "Usage: {} [Options...] PORT
+use structopt::StructOpt;
 
-Options:
-\t-h,--help\t\tShow usage",
-        progname
-    );
+#[derive(Debug, StructOpt)]
+#[structopt(name = "filereceiver", about = "Receives a file")]
+struct Cli {
+    port: u16,
 }
 
 fn main() {
-    let mut port: u16 = 0;
+    let args = Cli::from_args();
 
-    let mut i = 1;
-    let args: Vec<String> = env::args().collect();
-
-    while i < args.len() {
-        match args[i].as_str() {
-            "--help" | "-h" => {
-                show_usage(&args[0]);
-                std::process::exit(0);
-            }
-            _ => port = args[i].parse::<u16>().unwrap(),
-        }
-        i += 1;
-    }
-
-    if port == 0 {
-        eprintln!("Error: missing arguments\n");
-        show_usage(&args[0]);
-        std::process::exit(1);
-    }
-
-    let receiver = FileReceiver::new(port);
+    let receiver = FileReceiver::new(args.port);
     receiver.start();
 }
