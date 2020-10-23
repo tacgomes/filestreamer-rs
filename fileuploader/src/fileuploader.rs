@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fs::{metadata, File};
 use std::io::{self, prelude::*, ErrorKind, SeekFrom};
 use std::net::TcpStream;
@@ -35,7 +36,12 @@ impl FileUploader {
 
         let mut file = File::open(&filename).expect("Failed to open the file");
 
-        let mut buf = [0 as u8; BUF_SIZE];
+        let buf_size = match self.rate_limit {
+            Some(val) => cmp::min(val as usize, BUF_SIZE),
+            None => BUF_SIZE,
+        };
+
+        let mut buf = vec![0 as u8; buf_size];
         let mut u64_buf = [0 as u8; 8];
 
         let now = Instant::now();
