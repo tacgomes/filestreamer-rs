@@ -29,5 +29,5 @@ Now, in another terminal window, use the client to upload a file:
 
 Replace `testfile10Mb` with the file that you wish to upload. The file received
 will have the `.received` suffix appended to its filename. The `--limit-rate`
-parameter is optional and restricts the uploading speed to given number of
+parameter is optional and restricts the uploading speed to the given number of
 bytes per second.
