@@ -52,7 +52,7 @@ impl<T: Write> RateLimitedStream<T> {
             self.sync();
         }
 
-        assert!(self.available_tokens >= required_tokens);
+        debug_assert!(self.available_tokens >= required_tokens);
         self.available_tokens -= required_tokens;
     }
 
