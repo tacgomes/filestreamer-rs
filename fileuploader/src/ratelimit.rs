@@ -84,10 +84,10 @@ mod tests {
 
         let now = Instant::now();
 
-        stream.write(&[0 as u8; 1]).unwrap();
+        stream.write(&[0u8; 1]).unwrap();
         assert_eq!(now.elapsed().as_millis(), 1000);
 
-        stream.write(&[0 as u8; 1]).unwrap();
+        stream.write(&[0u8; 1]).unwrap();
         assert_eq!(now.elapsed().as_millis(), 2000);
     }
 
@@ -95,7 +95,7 @@ mod tests {
     #[should_panic]
     fn test_required_tokens_larger_than_capacity() {
         let mut stream = RateLimitedStream::new(io::sink(), Some(1));
-        stream.write(&[0 as u8; 2]).unwrap();
+        stream.write(&[0u8; 2]).unwrap();
     }
 
     #[test]
@@ -105,7 +105,7 @@ mod tests {
         std::thread::sleep(Duration::from_secs(2));
 
         let now = Instant::now();
-        stream.write(&[0 as u8; 2]).unwrap();
+        stream.write(&[0u8; 2]).unwrap();
         assert_eq!(now.elapsed().as_millis(), 0);
     }
 
@@ -116,7 +116,7 @@ mod tests {
         std::thread::sleep(Duration::from_millis(500));
 
         let now = Instant::now();
-        stream.write(&[0 as u8; 2]).unwrap();
+        stream.write(&[0u8; 2]).unwrap();
         let elapsed_millis = now.elapsed().as_millis();
         assert!(elapsed_millis >= 499 && elapsed_millis <= 501);
     }

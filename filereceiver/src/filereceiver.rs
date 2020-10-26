@@ -85,15 +85,15 @@ impl FileReceiver {
     fn handle_connection(&self, mut stream: TcpStream) {
         println!("Handling new request from: {}", stream.peer_addr().unwrap());
 
-        let mut u8_buf = [0 as u8; 1];
-        let mut u64_buf = [0 as u8; 8];
+        let mut u8_buf = [0u8; 1];
+        let mut u64_buf = [0u8; 8];
 
         stream
             .read_exact(&mut u8_buf)
             .expect("Failed to read filename length");
         let filename_len = u8::from_be_bytes(u8_buf);
 
-        let mut filename_buf = vec![0 as u8; filename_len as usize];
+        let mut filename_buf = vec![0u8; filename_len as usize];
         stream
             .read_exact(&mut filename_buf)
             .expect("Failed to read filename");
@@ -127,7 +127,7 @@ impl FileReceiver {
 
         let mut bytes_received: u64 = 0;
         let mut bytes_not_acknowledged: u64 = 0;
-        let mut buf = [0 as u8; BUF_SIZE];
+        let mut buf = [0u8; BUF_SIZE];
 
         while self.get_command() != Command::StopNow
             && match stream.read(&mut buf) {

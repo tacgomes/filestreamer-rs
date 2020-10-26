@@ -41,8 +41,8 @@ impl FileUploader {
             None => BUF_SIZE,
         };
 
-        let mut buf = vec![0 as u8; buf_size];
-        let mut u64_buf = [0 as u8; 8];
+        let mut buf = vec![0u8; buf_size];
+        let mut u64_buf = [0u8; 8];
 
         let now = Instant::now();
 
