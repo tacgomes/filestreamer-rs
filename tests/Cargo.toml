@@ -8,5 +8,5 @@ authors = ["Tiago Gomes <tiago.avv@gmail.com>"]
 rand = "0.7.3"
 sha2 = "0.9.1"
 serial_test = "0.5.0"
-fileuploader = { path = "../fileuploader" }
-filereceiver = { path = "../filereceiver" }
+file-uploader = { path = "../file_uploader" }
+file-receiver = { path = "../file_receiver" }

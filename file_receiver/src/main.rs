@@ -1,6 +1,6 @@
 use structopt::StructOpt;
 
-use filereceiver::FileReceiver;
+use file_receiver::FileReceiver;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "filereceiver", about = "Receives a file")]

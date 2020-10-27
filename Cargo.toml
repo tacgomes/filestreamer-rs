@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "fileuploader",
-    "filereceiver",
-    "streamingtests",
+    "file_uploader",
+    "file_receiver",
+    "tests",
 ]

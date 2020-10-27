@@ -10,8 +10,8 @@ use rand::prelude::*;
 use serial_test::serial;
 use sha2::{Digest, Sha256};
 
-use filereceiver::FileReceiver;
-use fileuploader::FileUploader;
+use file_receiver::FileReceiver;
+use file_uploader::FileUploader;
 
 const SERVER_PORT: u16 = 8080;
 

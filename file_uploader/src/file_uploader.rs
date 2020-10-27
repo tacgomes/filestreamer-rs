@@ -6,7 +6,7 @@ use std::path::Path;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::ratelimit::RateLimitedStream;
+use crate::rate_limit::RateLimitedStream;
 
 const BUF_SIZE: usize = 1024;
 

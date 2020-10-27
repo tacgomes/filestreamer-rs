@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-use fileuploader::FileUploader;
+use file_uploader::FileUploader;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "fileuploader", about = "Uploads a file")]
