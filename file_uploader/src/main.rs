@@ -17,12 +17,12 @@ struct Cli {
     rate_limit: Option<u32>,
 
     #[structopt(parse(from_os_str), name = "FILE")]
-    filename: PathBuf,
+    file_name: PathBuf,
 }
 
 fn main() {
     let args = Cli::from_args();
 
     let uploader = FileUploader::new(args.host, args.port, args.rate_limit);
-    uploader.upload(args.filename);
+    uploader.upload(args.file_name);
 }

@@ -90,15 +90,15 @@ impl FileReceiver {
 
         stream
             .read_exact(&mut u8_buf)
-            .expect("Failed to read filename length");
-        let filename_len = u8::from_be_bytes(u8_buf);
+            .expect("Failed to read file name length");
+        let file_name_len = u8::from_be_bytes(u8_buf);
 
-        let mut filename_buf = vec![0u8; filename_len as usize];
+        let mut file_name_buf = vec![0u8; file_name_len as usize];
         stream
-            .read_exact(&mut filename_buf)
-            .expect("Failed to read filename");
-        let filename =
-            String::from_utf8(filename_buf).expect("Failed to construct filename string");
+            .read_exact(&mut file_name_buf)
+            .expect("Failed to read file_name");
+        let file_name =
+            String::from_utf8(file_name_buf).expect("Failed to construct file name string");
 
         stream
             .read_exact(&mut u64_buf)
@@ -112,15 +112,15 @@ impl FileReceiver {
 
         println!(
             "Receiving file: {} (size={}, offset={})",
-            filename, file_size, offset
+            file_name, file_size, offset
         );
 
-        let filename = filename + ".received";
+        let file_name = file_name + ".received";
 
         let mut file = std::fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(Path::new(&filename).file_name().unwrap())
+            .open(Path::new(&file_name).file_name().unwrap())
             .expect("Failed to open file");
 
         file.seek(SeekFrom::Start(offset)).expect("Failed to seek");

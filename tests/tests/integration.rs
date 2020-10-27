@@ -15,8 +15,8 @@ use file_uploader::FileUploader;
 
 const SERVER_PORT: u16 = 8080;
 
-fn create_test_file<P: AsRef<Path>>(filename: P, size: usize) {
-    let file = File::create(filename).unwrap();
+fn create_test_file<P: AsRef<Path>>(file_name: P, size: usize) {
+    let file = File::create(file_name).unwrap();
     let mut writer = BufWriter::new(file);
     let mut rng = rand::thread_rng();
     let mut buffer = [0; 1024];
@@ -31,8 +31,8 @@ fn create_test_file<P: AsRef<Path>>(filename: P, size: usize) {
     }
 }
 
-fn calculate_checksum<P: AsRef<Path>>(filename: P) -> String {
-    let mut file = File::open(filename).unwrap();
+fn calculate_checksum<P: AsRef<Path>>(file_name: P) -> String {
+    let mut file = File::open(file_name).unwrap();
     let mut hasher = Sha256::new();
     io::copy(&mut file, &mut hasher).unwrap();
     format!("{:x}", hasher.finalize())
@@ -45,10 +45,10 @@ fn megabytes(n: usize) -> usize {
 #[test]
 #[serial]
 fn test_streaming_basic() {
-    let src_filename = "testfile10Mb";
-    let dst_filename = &format!("{}.received", src_filename);
+    let src_file_name = "testfile10Mb";
+    let dst_file_name = &format!("{}.received", src_file_name);
 
-    create_test_file(src_filename, megabytes(10));
+    create_test_file(src_file_name, megabytes(10));
 
     let receiver = Arc::new(FileReceiver::new(SERVER_PORT));
     let receiver_clone = receiver.clone();
@@ -63,7 +63,7 @@ fn test_streaming_basic() {
             SERVER_PORT,
             None
         );
-        uploader.upload(src_filename.to_string());
+        uploader.upload(src_file_name.to_string());
     });
 
     uploader_thread.join().unwrap();
@@ -71,11 +71,11 @@ fn test_streaming_basic() {
     receiver.stop();
     receiver_thread.join().unwrap();
 
-    let checksum_original = calculate_checksum(src_filename);
-    let checksum_copied = calculate_checksum(dst_filename);
+    let checksum_original = calculate_checksum(src_file_name);
+    let checksum_copied = calculate_checksum(dst_file_name);
 
-    fs::remove_file(&src_filename).unwrap();
-    fs::remove_file(&dst_filename).unwrap();
+    fs::remove_file(&src_file_name).unwrap();
+    fs::remove_file(&dst_file_name).unwrap();
 
     assert_eq!(checksum_original, checksum_copied);
 }
@@ -83,10 +83,10 @@ fn test_streaming_basic() {
 #[test]
 #[serial]
 fn test_streaming_restricted_upload_speed() {
-    let src_filename = "testfile10Mb";
-    let dst_filename = &format!("{}.received", src_filename);
+    let src_file_name = "testfile10Mb";
+    let dst_file_name = &format!("{}.received", src_file_name);
 
-    create_test_file(src_filename, megabytes(10));
+    create_test_file(src_file_name, megabytes(10));
 
     let receiver = Arc::new(FileReceiver::new(SERVER_PORT));
     let receiver_clone = receiver.clone();
@@ -101,7 +101,7 @@ fn test_streaming_restricted_upload_speed() {
             SERVER_PORT,
             Some(megabytes(1) as u32),
         );
-        uploader.upload(src_filename.to_string());
+        uploader.upload(src_file_name.to_string());
     });
 
     let now = Instant::now();
@@ -111,10 +111,10 @@ fn test_streaming_restricted_upload_speed() {
     receiver.stop();
     receiver_thread.join().unwrap();
 
-    let checksum_original = calculate_checksum(src_filename);
-    let checksum_copied = calculate_checksum(dst_filename);
-    fs::remove_file(&src_filename).unwrap();
-    fs::remove_file(&dst_filename).unwrap();
+    let checksum_original = calculate_checksum(src_file_name);
+    let checksum_copied = calculate_checksum(dst_file_name);
+    fs::remove_file(&src_file_name).unwrap();
+    fs::remove_file(&dst_file_name).unwrap();
 
     // The transfer should take 10 seconds to complete. Allow some
     // margin of error necessary for the tests for pass in the CI.
@@ -126,10 +126,10 @@ fn test_streaming_restricted_upload_speed() {
 #[test]
 #[serial]
 fn test_streaming_resuming_upload() {
-    let src_filename = "testfile10Mb";
-    let dst_filename = &format!("{}.received", src_filename);
+    let src_file_name = "testfile10Mb";
+    let dst_file_name = &format!("{}.received", src_file_name);
 
-    create_test_file(src_filename, megabytes(10));
+    create_test_file(src_file_name, megabytes(10));
 
     let receiver = Arc::new(FileReceiver::new(SERVER_PORT));
     let receiver_clone_a = receiver.clone();
@@ -145,7 +145,7 @@ fn test_streaming_resuming_upload() {
             SERVER_PORT,
             Some(megabytes(1) as u32),
         );
-        uploader.upload(src_filename.to_string());
+        uploader.upload(src_file_name.to_string());
     });
 
     let now = Instant::now();
@@ -164,11 +164,11 @@ fn test_streaming_resuming_upload() {
     receiver.stop();
     receiver_thread.join().unwrap();
 
-    let checksum_original = calculate_checksum(src_filename);
-    let checksum_copied = calculate_checksum(dst_filename);
+    let checksum_original = calculate_checksum(src_file_name);
+    let checksum_copied = calculate_checksum(dst_file_name);
 
-    fs::remove_file(&src_filename).unwrap();
-    fs::remove_file(&dst_filename).unwrap();
+    fs::remove_file(&src_file_name).unwrap();
+    fs::remove_file(&dst_file_name).unwrap();
 
     // The transfer should take a bit more than 10 seconds to complete.
     // Allow some margin of error necessary for the tests for pass in

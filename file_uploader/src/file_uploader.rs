@@ -25,19 +25,19 @@ impl FileUploader {
         }
     }
 
-    pub fn upload<P: AsRef<Path>>(&self, filename: P) {
+    pub fn upload<P: AsRef<Path>>(&self, file_name: P) {
         let mut stream = RateLimitedStream::new(self.connect(), self.rate_limit);
 
         let mut bytes_acknowledged = 0;
         let mut total_bytes_sent = 0;
 
-        let file_size = metadata(&filename).expect("Failed to read file size").len();
+        let file_size = metadata(&file_name).expect("Failed to read file size").len();
 
-        let mut file = File::open(&filename).expect("Failed to open the file");
+        let mut file = File::open(&file_name).expect("Failed to open the file");
 
-        let filename = filename.as_ref().to_string_lossy();
+        let file_name = file_name.as_ref().to_string_lossy();
 
-        self.send_header(&mut stream, &filename, file_size, 0);
+        self.send_header(&mut stream, &file_name, file_size, 0);
 
         let buf_size = match self.rate_limit {
             Some(val) => cmp::min(val as usize, BUF_SIZE),
@@ -81,7 +81,7 @@ impl FileUploader {
                             file.seek(SeekFrom::Start(bytes_acknowledged))
                                 .expect("Failed to seek");
                             stream.update_stream(self.connect());
-                            self.send_header(&mut stream, &filename, file_size, bytes_acknowledged);
+                            self.send_header(&mut stream, &file_name, file_size, bytes_acknowledged);
                             break;
                         }
                         _ => panic!("Unhandled error: {}", e),
@@ -147,17 +147,17 @@ impl FileUploader {
     fn send_header(
         &self,
         stream: &mut RateLimitedStream<TcpStream>,
-        filename: &str,
+        file_name: &str,
         file_size: u64,
         file_offset: u64,
     ) {
         stream
-            .write(&(filename.len() as u8).to_be_bytes())
-            .expect("Failed to send filename length");
+            .write(&(file_name.len() as u8).to_be_bytes())
+            .expect("Failed to send file name length");
 
         stream
-            .write(filename.as_bytes())
-            .expect("Failed to send filename");
+            .write(file_name.as_bytes())
+            .expect("Failed to send file name");
 
         stream
             .write(&file_size.to_be_bytes())
