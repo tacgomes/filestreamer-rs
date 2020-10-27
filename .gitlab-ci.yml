@@ -1,6 +1,10 @@
 image: "rust:latest"
+before_script:
+  - rustup component add clippy
 
-test:cargo:
+
+test:
   script:
     - rustc --version && cargo --version
+    - cargo clippy -- -D warnings
     - cargo test --workspace --verbose
