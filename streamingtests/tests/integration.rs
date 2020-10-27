@@ -50,7 +50,7 @@ fn test_streaming_basic() {
 
     create_test_file(src_filename, megabytes(10));
 
-    let receiver = Arc::new(FileReceiver::new(8000));
+    let receiver = Arc::new(FileReceiver::new(SERVER_PORT));
     let receiver_clone = receiver.clone();
 
     let receiver_thread = thread::spawn(move || {
@@ -88,7 +88,7 @@ fn test_streaming_restricted_upload_speed() {
 
     create_test_file(src_filename, megabytes(10));
 
-    let receiver = Arc::new(FileReceiver::new(8000));
+    let receiver = Arc::new(FileReceiver::new(SERVER_PORT));
     let receiver_clone = receiver.clone();
 
     let receiver_thread = thread::spawn(move || {
@@ -131,7 +131,7 @@ fn test_streaming_resuming_upload() {
 
     create_test_file(src_filename, megabytes(10));
 
-    let receiver = Arc::new(FileReceiver::new(8000));
+    let receiver = Arc::new(FileReceiver::new(SERVER_PORT));
     let receiver_clone_a = receiver.clone();
     let receiver_clone_b = receiver.clone();
 
