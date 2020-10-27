@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use structopt::StructOpt;
 
 use fileuploader::FileUploader;
@@ -14,8 +16,8 @@ struct Cli {
     #[structopt(long)]
     rate_limit: Option<u32>,
 
-    #[structopt(name = "FILE")]
-    filename: String,
+    #[structopt(parse(from_os_str), name = "FILE")]
+    filename: PathBuf,
 }
 
 fn main() {

@@ -2,6 +2,7 @@ use std::cmp;
 use std::fs::{metadata, File};
 use std::io::{self, prelude::*, ErrorKind, SeekFrom};
 use std::net::TcpStream;
+use std::path::Path;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -24,7 +25,7 @@ impl FileUploader {
         }
     }
 
-    pub fn upload(&self, filename: String) {
+    pub fn upload<P: AsRef<Path>>(&self, filename: P) {
         let mut stream = RateLimitedStream::new(self.connect(), self.rate_limit);
 
         let mut bytes_acknowledged = 0;
@@ -32,9 +33,11 @@ impl FileUploader {
 
         let file_size = metadata(&filename).expect("Failed to read file size").len();
 
-        self.send_header(&mut stream, &filename, file_size, 0);
-
         let mut file = File::open(&filename).expect("Failed to open the file");
+
+        let filename = filename.as_ref().to_string_lossy();
+
+        self.send_header(&mut stream, &filename, file_size, 0);
 
         let buf_size = match self.rate_limit {
             Some(val) => cmp::min(val as usize, BUF_SIZE),
