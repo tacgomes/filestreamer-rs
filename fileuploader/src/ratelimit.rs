@@ -26,7 +26,7 @@ impl<T: Write> RateLimitedStream<T> {
     }
 
     pub fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        if let Some(_) = self.token_rate {
+        if self.token_rate.is_some() {
             self.reserve(buf.len());
         }
         self.stream.write(buf)

@@ -6,7 +6,7 @@ use std::thread;
 use std::time::Duration;
 
 const BUF_SIZE: usize = 1024;
-const MAX_BYTES_NOT_ACKNOWLEDGED: u64 = 1 * 1024 * 1024;
+const MAX_BYTES_NOT_ACKNOWLEDGED: u64 = 1024 * 1024;
 const POLLING_TIME: Duration = Duration::from_millis(200);
 
 #[derive(PartialEq)]
