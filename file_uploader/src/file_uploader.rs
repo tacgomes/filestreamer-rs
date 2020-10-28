@@ -25,7 +25,7 @@ impl FileUploader {
         }
     }
 
-    pub fn upload<P: AsRef<Path>>(&self, file_name: P) {
+    pub fn upload(&self, file_name: impl AsRef<Path>) {
         let mut stream = RateLimitedStream::new(self.connect(), self.rate_limit);
 
         let mut bytes_acknowledged = 0;

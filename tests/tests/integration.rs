@@ -15,7 +15,7 @@ use file_uploader::FileUploader;
 
 const SERVER_PORT: u16 = 8080;
 
-fn create_test_file<P: AsRef<Path>>(file_name: P, size: usize) {
+fn create_test_file(file_name: impl AsRef<Path>, size: usize) {
     let file = File::create(file_name).unwrap();
     let mut writer = BufWriter::new(file);
     let mut rng = rand::thread_rng();
@@ -31,7 +31,7 @@ fn create_test_file<P: AsRef<Path>>(file_name: P, size: usize) {
     }
 }
 
-fn calculate_checksum<P: AsRef<Path>>(file_name: P) -> String {
+fn calculate_checksum(file_name: impl AsRef<Path>) -> String {
     let mut file = File::open(file_name).unwrap();
     let mut hasher = Sha256::new();
     io::copy(&mut file, &mut hasher).unwrap();
