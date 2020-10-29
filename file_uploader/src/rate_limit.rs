@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "Requested number of tokens can not exceed capacity")]
     fn test_required_tokens_larger_than_capacity() {
         let mut stream = RateLimitedStream::new(io::sink(), Some(1));
         stream.write(&[0u8; 2]).unwrap();
