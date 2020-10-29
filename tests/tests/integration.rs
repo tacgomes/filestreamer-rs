@@ -58,11 +58,7 @@ fn test_streaming_basic() {
     });
 
     let uploader_thread = thread::spawn(move || {
-        let uploader = FileUploader::new(
-            "localhost".to_string(),
-            SERVER_PORT,
-            None
-        );
+        let uploader = FileUploader::new("localhost".to_string(), SERVER_PORT, None);
         uploader.upload(src_file_name.to_string());
     });
 

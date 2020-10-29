@@ -31,7 +31,9 @@ impl FileUploader {
         let mut bytes_acknowledged = 0;
         let mut total_bytes_sent = 0;
 
-        let file_size = metadata(&file_name).expect("Failed to read file size").len();
+        let file_size = metadata(&file_name)
+            .expect("Failed to read file size")
+            .len();
 
         let mut file = File::open(&file_name).expect("Failed to open the file");
 
@@ -81,7 +83,12 @@ impl FileUploader {
                             file.seek(SeekFrom::Start(bytes_acknowledged))
                                 .expect("Failed to seek");
                             stream.update_stream(self.connect());
-                            self.send_header(&mut stream, &file_name, file_size, bytes_acknowledged);
+                            self.send_header(
+                                &mut stream,
+                                &file_name,
+                                file_size,
+                                bytes_acknowledged,
+                            );
                             break;
                         }
                         _ => panic!("Unhandled error: {}", e),
