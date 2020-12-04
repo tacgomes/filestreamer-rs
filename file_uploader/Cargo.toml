@@ -1,7 +1,7 @@
 [package]
 name = "file-uploader"
 version = "0.1.0"
-authors = ["tiagogomes <tiago.avv@gmail.com>"]
+authors = ["tacg <tacg@tacgomes.com>"]
 edition = "2018"
 
 [dependencies]
